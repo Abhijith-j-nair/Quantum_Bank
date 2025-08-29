@@ -1,0 +1,29 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+# Ignore your local database file
+db.sqlite3
+db.sqlite3-journal
+
+# Environment variables
+# Never commit your secret keys or environment files!
+.env
+*.env
+
+# Static files collected for production
+/staticfiles/
+
+# Media files
+/media/
+
+# IDE / Editor specific files
+.idea/
+.vscode/
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db

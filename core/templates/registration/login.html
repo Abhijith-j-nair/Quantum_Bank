@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+  <form method="post">
+    <h2>Login to Quantum Bank</h2>
+    {% csrf_token %}
+    
+    <p>
+        <label for="id_username">Username:</label>
+        {{ form.username }}
+    </p>
+    <p>
+        <label for="id_password">Password:</label>
+        {{ form.password }}
+    </p>
+
+    {% if form.errors %}
+        <p class="error">Your username and password didn't match. Please try again.</p>
+    {% endif %}
+
+    <button type="submit" class="btn">Login</button>
+  </form>
+{% endblock %}

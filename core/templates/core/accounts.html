@@ -1,0 +1,41 @@
+   {% extends "base.html" %}
+
+   {% block content %}
+   <div class="container mt-4">
+     <div class="d-flex justify-content-between mb-4">
+       <h2>Your Accounts</h2>
+       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+         + New Account
+       </button>
+     </div>
+     
+     <div class="row">
+       {% for account in accounts %}
+       <div class="col-md-6 mb-4">
+         <div class="card {% if account.is_primary %}border-primary{% endif %}">
+           <div class="card-body">
+             <div class="d-flex justify-content-between">
+               <h5>{{ account.account_type }} Account</h5>
+               <span class="badge bg-{% if account.is_primary %}primary{% else %}secondary{% endif %}">
+                 {% if account.is_primary %}Primary{% else %}Secondary{% endif %}
+               </span>
+             </div>
+             <p class="card-text">
+               <strong>Number:</strong> {{ account.account_number }}<br>
+               <strong>Balance:</strong> ${{ account.balance|floatformat:2 }}
+             </p>
+             <button class="btn btn-outline-primary btn-sm" 
+                     onclick="location.href='{% url 'account_detail' account.id %}'">
+               View Details
+             </button>
+           </div>
+         </div>
+       </div>
+       {% endfor %}
+     </div>
+   </div>
+
+   <!-- Account Creation Modal -->
+   {% include 'modals/create_account.html' %}
+   {% endblock %}
+   

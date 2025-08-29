@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Total Balance</h2>
+    <p class="balance-display">${{ total_balance|floatformat:2 }}</p>
+</div>
+
+<div class="card">
+    <h3>Account Balances</h3>
+    <p><strong>Checking:</strong> ${{ checking_balance|floatformat:2 }}</p>
+    <p><strong>Savings:</strong> ${{ savings_balance|floatformat:2 }}</p>
+</div>
+
+<div class="card">
+    <h3>Recent Transactions</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in recent_transactions %}
+            <tr>
+                <td>{{ tx.timestamp|date:"Y-m-d H:i" }}</td>
+                <td>{{ tx.description }}</td>
+                <td>${{ tx.amount|floatformat:2 }}</td>
+                <td>{{ tx.status }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No recent transactions.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
