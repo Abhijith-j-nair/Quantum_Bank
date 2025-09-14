@@ -1,0 +1,10 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<form method="post">
+    <h2>Create a New Bank Account</h2>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn">Create Account</button>
+</form>
+{% endblock %}

@@ -1,18 +1,29 @@
 # core/views.py
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import datetime
-from .forms import TransferForm, AccountCreationForm, UserProfileForm
+from .forms import TransferForm, AccountCreationForm, UserProfileForm, SignUpForm
 from .models import Account, Transaction, CustomUser     
 from .serializers import TransactionSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # Log the user in automatically after sign-up
+            return redirect('home') # Redirect to the dashboard
+    else:
+        form = SignUpForm()
+    return render(request, 'registration/signup.html', {'form': form})
 
 @login_required
 def dashboard_view(request):
@@ -33,7 +44,6 @@ def dashboard_view(request):
         'savings_balance': savings_balance,
         'recent_transactions': recent_transactions,
     }
-    # FIXED: Added 'core/' prefix to the template path
     return render(request, 'core/dashboard.html', context)
 
 @login_required
@@ -42,7 +52,6 @@ def transfer_view(request):
     if request.method == 'POST':
         form = TransferForm(request.POST, user=request.user)
         if form.is_valid():
-            # ... (your existing logic is correct) ...
             sender_account = form.cleaned_data['from_account']
             recipient_identifier = form.cleaned_data['recipient']
             amount = form.cleaned_data['amount']
@@ -59,12 +68,10 @@ def transfer_view(request):
 
                 if not receiver_account:
                     messages.error(request, "Recipient account not found.")
-                    # FIXED: Added 'core/' prefix
                     return render(request, 'core/transfer.html', {'form': form})
 
                 if sender_account.balance < amount:
                     messages.error(request, "Insufficient funds.")
-                    # FIXED: Added 'core/' prefix
                     return render(request, 'core/transfer.html', {'form': form})
 
                 sender_account.balance -= amount
@@ -85,14 +92,11 @@ def transfer_view(request):
 
             except Exception as e:
                 messages.error(request, f"An error occurred: {e}")
-                # FIXED: Added 'core/' prefix
                 return render(request, 'core/transfer.html', {'form': form})
         else:
-            # FIXED: Added 'core/' prefix
             return render(request, 'core/transfer.html', {'form': form})
     else:
         form = TransferForm(user=request.user)
-    # FIXED: Added 'core/' prefix
     return render(request, 'core/transfer.html', {'form': form})
 
 @login_required
@@ -120,7 +124,6 @@ def transaction_list_view(request):
         'start_date': start_date,
         'end_date': end_date
     }
-    # FIXED: Added 'core/' prefix
     return render(request, 'core/transactions.html', context)
 
 @login_required
@@ -134,13 +137,12 @@ def account_detail_view(request, account_id):
         'account': account,
         'recent_transactions': transactions
     }
-    # FIXED: Added 'core/' prefix (assuming you will create this template later)
     return render(request, 'core/account_detail.html', context)
 
 @login_required
 def create_account_view(request):
     if request.method == 'POST':
-        form = AccountCreationForm(request.POST, user=request.user)
+        form = AccountCreationForm(request.POST)
         if form.is_valid():
             account = form.save(commit=False)
             account.user = request.user
@@ -148,9 +150,8 @@ def create_account_view(request):
             messages.success(request, f"New {account.account_type} account created!")
             return redirect('accounts')
     else:
-        form = AccountCreationForm(user=request.user)
+        form = AccountCreationForm()
 
-    # FIXED: Added 'core/' prefix (assuming you create this template)
     return render(request, 'core/create_account.html', {'form': form})
 
 @api_view(['GET'])

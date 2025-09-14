@@ -137,3 +137,20 @@ th {
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+/* Makes the logout form button look like a regular link */
+.link-button {
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 500;
+    padding: 0;
+    margin-left: 1.5rem; /* Matches the margin of other nav links */
+    text-decoration: none;
+}
+
+.link-button:hover {
+    color: #007bff; /* Matches the hover color of other nav links */
+}

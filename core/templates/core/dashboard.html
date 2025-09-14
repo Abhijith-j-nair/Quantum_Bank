@@ -3,13 +3,15 @@
 {% block content %}
 <div class="card">
     <h2>Total Balance</h2>
-    <p class="balance-display">${{ total_balance|floatformat:2 }}</p>
+    <p class="balance-display">₹{{ total_balance|floatformat:2 }}</p>
 </div>
 
 <div class="card">
     <h3>Account Balances</h3>
-    <p><strong>Checking:</strong> ${{ checking_balance|floatformat:2 }}</p>
-    <p><strong>Savings:</strong> ${{ savings_balance|floatformat:2 }}</p>
+    <p><strong>Checking:</strong> ₹{{ checking_balance|floatformat:2 }}</p>
+    <p><strong>Savings:</strong> ₹{{ savings_balance|floatformat:2 }}</p>
+    <br>
+    <a href="{% url 'create_account' %}" class="btn">Add New Account</a>
 </div>
 
 <div class="card">
@@ -28,7 +30,7 @@
             <tr>
                 <td>{{ tx.timestamp|date:"Y-m-d H:i" }}</td>
                 <td>{{ tx.description }}</td>
-                <td>${{ tx.amount|floatformat:2 }}</td>
+                <td>₹{{ tx.amount|floatformat:2 }}</td>
                 <td>{{ tx.status }}</td>
             </tr>
             {% empty %}

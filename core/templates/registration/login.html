@@ -19,5 +19,13 @@
     {% endif %}
 
     <button type="submit" class="btn">Login</button>
+    <hr>
+    
+    <p>Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+
+    <p style="text-align: center; margin-top: 1rem; font-size: 0.9em;">
+        <a href="{% url 'admin:index' %}">Admin Login</a>
+    </p>
+
   </form>
 {% endblock %}

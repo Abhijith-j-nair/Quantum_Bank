@@ -5,7 +5,11 @@ from . import views
 urlpatterns = [
     # This makes the dashboard your site's homepage
     path('', views.dashboard_view, name='home'),
+    
+    # This is the specific URL for the signup page
+    path('signup/', views.signup_view, name='signup'),
 
+    # Core banking features
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('transfer/', views.transfer_view, name='transfer'),
     path('transactions/', views.transaction_list_view, name='transactions'),
