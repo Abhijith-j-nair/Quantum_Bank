@@ -1,4 +1,5 @@
 # core/views.py
+import uuid  # Import the uuid library to generate random numbers
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -9,21 +10,54 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import datetime
 from .forms import TransferForm, AccountCreationForm, UserProfileForm, SignUpForm
-from .models import Account, Transaction, CustomUser     
+from .models import Account, Transaction, CustomUser
 from .serializers import TransactionSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+# --- NEW HELPER FUNCTION ---
+# This function creates a unique, 10-digit account number.
+def generate_account_number():
+    return str(uuid.uuid4().int)[:10]
 
 def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # Log the user in automatically after sign-up
-            return redirect('home') # Redirect to the dashboard
+            # After a user signs up, let's create a default Checking account for them
+            Account.objects.create(
+                user=user,
+                account_type='Checking',
+                balance=0.00,
+                account_number=generate_account_number()
+            )
+            login(request, user)
+            return redirect('home')
     else:
         form = SignUpForm()
     return render(request, 'registration/signup.html', {'form': form})
+
+# --- UPDATED create_account_view ---
+@login_required
+def create_account_view(request):
+    if request.method == 'POST':
+        form = AccountCreationForm(request.POST)
+        if form.is_valid():
+            account = form.save(commit=False)
+            account.user = request.user
+            # --- THIS IS THE FIX ---
+            # We generate and assign the new account number before saving.
+            account.account_number = generate_account_number()
+            account.save()
+            messages.success(request, f"New {account.account_type} account created!")
+            return redirect('accounts')
+    else:
+        form = AccountCreationForm()
+    return render(request, 'core/create_account.html', {'form': form})
+
+
+# --- ALL OTHER VIEWS REMAIN THE SAME ---
 
 @login_required
 def dashboard_view(request):
@@ -138,21 +172,6 @@ def account_detail_view(request, account_id):
         'recent_transactions': transactions
     }
     return render(request, 'core/account_detail.html', context)
-
-@login_required
-def create_account_view(request):
-    if request.method == 'POST':
-        form = AccountCreationForm(request.POST)
-        if form.is_valid():
-            account = form.save(commit=False)
-            account.user = request.user
-            account.save()
-            messages.success(request, f"New {account.account_type} account created!")
-            return redirect('accounts')
-    else:
-        form = AccountCreationForm()
-
-    return render(request, 'core/create_account.html', {'form': form})
 
 @api_view(['GET'])
 @login_required
