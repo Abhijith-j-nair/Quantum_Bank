@@ -7,12 +7,10 @@
     
     <p>
         <label for="id_username">Username:</label>
-        {{ form.username }}
-    </p>
+        {{ form.username }}  </p>
     <p>
         <label for="id_password">Password:</label>
-        {{ form.password }}
-    </p>
+        {{ form.password }}  </p>
 
     {% if form.errors %}
         <p class="error">Your username and password didn't match. Please try again.</p>
@@ -22,10 +20,5 @@
     <hr>
     
     <p>Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
-
-    <p style="text-align: center; margin-top: 1rem; font-size: 0.9em;">
-        <a href="{% url 'admin:index' %}">Admin Login</a>
-    </p>
-
   </form>
 {% endblock %}
