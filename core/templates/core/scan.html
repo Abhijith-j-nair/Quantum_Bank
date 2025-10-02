@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Scan & Pay</h2>
+    <p>Point your camera at a Quantum Bank QR code to start a payment.</p>
+
+    <div id="qr-reader" style="width: 100%; max-width: 500px; margin: 1rem auto;"></div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+    function onScanSuccess(decodedText, decodedResult) {
+        // This function is called when a QR code is successfully scanned.
+        // decodedText will contain the URL from the QR code.
+
+        console.log(`Scan result: ${decodedText}`);
+
+        // Stop the scanner
+        html5QrcodeScanner.clear();
+
+        // Automatically redirect the browser to the scanned URL
+        window.location.href = decodedText;
+    }
+
+    function onScanError(errorMessage) {
+        // This function is called for non-critical errors. We can ignore it.
+    }
+
+    // Create a new scanner instance
+    var html5QrcodeScanner = new Html5QrcodeScanner(
+        "qr-reader", // The ID of the div to use for the viewfinder
+        { fps: 10, qrbox: { width: 250, height: 250 } } // Scanner configuration
+    );
+
+    // Start the scanner
+    html5QrcodeScanner.render(onScanSuccess, onScanError);
+</script>
+{% endblock %}

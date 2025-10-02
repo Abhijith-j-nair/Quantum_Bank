@@ -198,3 +198,7 @@ def qr_code_view(request, account_id):
     qr_image.save(stream, format='PNG')
     stream.seek(0)
     return HttpResponse(stream.getvalue(), content_type="image/png")
+
+@login_required
+def scan_and_pay_view(request):
+    return render(request, 'core/scan.html')
