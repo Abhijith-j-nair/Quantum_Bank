@@ -1,5 +1,8 @@
 # core/views.py
-import uuid  # Import the uuid library to generate random numbers
+import uuid
+from django.http import HttpResponse
+import qrcode
+from io import BytesIO
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -15,8 +18,6 @@ from .serializers import TransactionSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-# --- NEW HELPER FUNCTION ---
-# This function creates a unique, 10-digit account number.
 def generate_account_number():
     return str(uuid.uuid4().int)[:10]
 
@@ -25,7 +26,6 @@ def signup_view(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # After a user signs up, let's create a default Checking account for them
             Account.objects.create(
                 user=user,
                 account_type='Checking',
@@ -38,7 +38,6 @@ def signup_view(request):
         form = SignUpForm()
     return render(request, 'registration/signup.html', {'form': form})
 
-# --- UPDATED create_account_view ---
 @login_required
 def create_account_view(request):
     if request.method == 'POST':
@@ -46,8 +45,6 @@ def create_account_view(request):
         if form.is_valid():
             account = form.save(commit=False)
             account.user = request.user
-            # --- THIS IS THE FIX ---
-            # We generate and assign the new account number before saving.
             account.account_number = generate_account_number()
             account.save()
             messages.success(request, f"New {account.account_type} account created!")
@@ -56,15 +53,15 @@ def create_account_view(request):
         form = AccountCreationForm()
     return render(request, 'core/create_account.html', {'form': form})
 
-
-# --- ALL OTHER VIEWS REMAIN THE SAME ---
-
 @login_required
 def dashboard_view(request):
     user_accounts = Account.objects.filter(user=request.user)
     total_balance = sum(account.balance for account in user_accounts)
-    checking_account = user_accounts.filter(account_type='Checking').first()
-    savings_account = user_accounts.filter(account_type='Savings').first()
+    
+    # --- FIX: Use case-insensitive search for account types ---
+    checking_account = user_accounts.filter(account_type__iexact='Checking').first()
+    savings_account = user_accounts.filter(account_type__iexact='Savings').first()
+    
     checking_balance = checking_account.balance if checking_account else 0.00
     savings_balance = savings_account.balance if savings_account else 0.00
     recent_transactions = Transaction.objects.filter(
@@ -74,6 +71,8 @@ def dashboard_view(request):
     context = {
         'user_accounts': user_accounts,
         'total_balance': total_balance,
+        'checking_account': checking_account,
+        'savings_account': savings_account,
         'checking_balance': checking_balance,
         'savings_balance': savings_balance,
         'recent_transactions': recent_transactions,
@@ -138,7 +137,7 @@ def transaction_list_view(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     transactions_list = Transaction.objects.filter(
-        Q(sender_account__user=request.user) | 
+        Q(sender_account__user=request.user) |
         Q(receiver_account__user=request.user)
     ).order_by('-timestamp')
 
@@ -185,3 +184,34 @@ def api_transaction_detail(request, transaction_id):
         return Response(serializer.data)
     except Transaction.DoesNotExist:
         return Response({"error": "Transaction not found"}, status=404)
+
+@login_required
+def qr_code_view(request, account_id):
+    account = get_object_or_404(Account, id=account_id, user=request.user)
+    
+    # --- THIS IS THE CHANGE ---
+    # Build the full "Pay Me" URL to encode in the QR code
+    pay_me_url = request.build_absolute_uri(
+        reverse('pay_me', args=[account.account_number])
+    )
+    data = pay_me_url
+    
+    # The rest of the function stays the same
+    qr_image = qrcode.make(data, box_size=10, border=4)
+    stream = BytesIO()
+    qr_image.save(stream, format='PNG')
+    stream.seek(0)
+    
+    return HttpResponse(stream.getvalue(), content_type="image/png")
+
+@login_required
+def pay_me_view(request, account_number):
+    # Find the account the QR code points to
+    recipient_account = get_object_or_404(Account, account_number=account_number)
+    
+    # Pre-fill the form with the recipient's account number
+    initial_data = {'recipient': recipient_account.account_number}
+    form = TransferForm(user=request.user, initial=initial_data)
+    
+    # We will reuse the existing transfer.html template to display the form
+    return render(request, 'core/transfer.html', {'form': form, 'recipient_account': recipient_account})
