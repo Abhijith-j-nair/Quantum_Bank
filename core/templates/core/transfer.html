@@ -1,8 +1,17 @@
 {% extends "core/base.html" %}
 
 {% block content %}
-<form method="post">
+<form action="{% url 'transfer' %}" method="post">
     <h2>Make a Transfer</h2>
+
+    {% if recipient_account %}
+        <div class="card" style="background-color: #e9f7fe; border-left: 5px solid #007bff;">
+            <p>You are about to send money to:</p>
+            <h3>{{ recipient_account.user.username }}</h3>
+            <p>Account Number: {{ recipient_account.account_number }}</p>
+        </div>
+    {% endif %}
+
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn">Submit Transfer</button>
