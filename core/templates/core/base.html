@@ -14,10 +14,9 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'home' %}">Dashboard</a>
                 <a href="{% url 'transfer' %}">Transfer</a>
-                
                 <a href="{% url 'scan_and_pay' %}">Scan & Pay</a>
-                
                 <a href="{% url 'transactions' %}">History</a>
+                <a href="{% url 'chatbot' %}">AI Assistant</a>
                 <span class="user-info">Hello, {{ user.username }}</span>
                 <form action="{% url 'logout' %}" method="post" style="display: inline;">
                     {% csrf_token %}

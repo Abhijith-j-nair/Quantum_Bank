@@ -18,6 +18,8 @@ from .models import Account, Transaction, CustomUser
 from .serializers import TransactionSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.http import JsonResponse
+import json
 
 def generate_account_number():
     return str(uuid.uuid4().int)[:10]
@@ -202,3 +204,32 @@ def qr_code_view(request, account_id):
 @login_required
 def scan_and_pay_view(request):
     return render(request, 'core/scan.html')
+
+@login_required
+def chatbot_view(request):
+    return render(request, 'core/chatbot.html')
+
+@login_required
+def chatbot_api_view(request):
+    if request.method == 'POST':
+        # Decode the user's message from the request
+        data = json.loads(request.body)
+        user_message = data.get('message', '').lower()
+
+        # --- The Chatbot "Brain" ---
+        # We look for keywords in the user's message
+        if 'balance' in user_message:
+            bot_response = "You can view your account balance on the main dashboard page."
+        elif 'transfer' in user_message or 'send money' in user_message:
+            bot_response = "To send money, please use the 'Transfer' link in the navigation bar."
+        elif 'password' in user_message or 'reset' in user_message:
+            bot_response = "You can reset your password by logging out and using the 'Forgot Password?' link on the login page."
+        elif 'qr code' in user_message or 'scan' in user_message:
+            bot_response = "Your personal QR code is on the dashboard. To pay someone, use the 'Scan & Pay' link."
+        elif 'hello' in user_message or 'hi' in user_message:
+            bot_response = "Hello! How can I help you today? You can ask me about your balance, transfers, or how to reset your password."
+        else:
+            bot_response = "I'm sorry, I can only answer questions about account balance, transfers, QR codes, or password resets. Please try rephrasing your question."
+
+        return JsonResponse({'response': bot_response})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
