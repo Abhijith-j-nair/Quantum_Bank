@@ -1,10 +1,59 @@
 {% extends "core/base.html" %}
 
 {% block content %}
-  <form method="post">
-    <h2>Sign Up for Quantum Bank</h2>
+  <form method="post" class="col-md-6 offset-md-3">
+    <h2 class="mb-4 text-center">Sign Up for Quantum Bank</h2>
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn">Sign Up</button>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            {% for error in form.non_field_errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% for field in form %}
+        <div class="mb-3 {% if field.name == 'password' or field.name == 'password2' %}position-relative{% endif %}">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.name == 'password' %}
+                <span class="position-absolute top-50 end-0 translate-middle-y me-3" style="cursor: pointer;" onclick="togglePasswordVisibility('{{ field.id_for_label }}', this)">
+                    <i class="bi bi-eye-slash-fill"></i>
+                </span>
+             {% elif field.name == 'password2' %}
+                 <span class="position-absolute top-50 end-0 translate-middle-y me-3" style="cursor: pointer;" onclick="togglePasswordVisibility('{{ field.id_for_label }}', this)">
+                     <i class="bi bi-eye-slash-fill"></i>
+                 </span>
+            {% endif %}
+            {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+            {% endif %}
+            {% if field.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in field.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">Sign Up</button>
+    </div>
   </form>
+
+  {% block extra_js %}
+  <script>
+      function togglePasswordVisibility(fieldId, iconElement) {
+          const passwordField = document.getElementById(fieldId);
+          const icon = iconElement.querySelector('i');
+          const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordField.setAttribute('type', type);
+          icon.classList.toggle('bi-eye-fill');
+          icon.classList.toggle('bi-eye-slash-fill');
+      }
+  </script>
+  {% endblock %}
 {% endblock %}
