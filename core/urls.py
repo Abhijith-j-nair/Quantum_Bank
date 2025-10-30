@@ -14,8 +14,9 @@ urlpatterns = [
     path('accounts/create/', views.create_account_view, name='create_account'),
     path('qr_code/<int:account_id>/', views.qr_code_view, name='qr_code'),
     path('pay/<str:account_number>/', views.pay_me_view, name='pay_me'),
-
-    # Paths for the chatbot feature
-    path('api/chatbot/', views.chatbot_api_view, name='chatbot_api'),
+    
+    # Chatbot URLs
     path('chatbot/', views.chatbot_view, name='chatbot'),
+    path('api/chatbot/', views.chatbot_api_view, name='chatbot_api'),
+    path('api/chatbot/execute_transfer/', views.execute_chatbot_transfer, name='chatbot_execute_transfer'),
 ]
