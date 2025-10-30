@@ -1,6 +1,6 @@
 # core/views.py
 import uuid
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import qrcode
 from io import BytesIO
 from django.urls import reverse
@@ -13,13 +13,17 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import datetime
-from .forms import TransferForm, AccountCreationForm, UserProfileForm, SignUpForm
+import json
+
+# Import the models we need to query
 from .models import Account, Transaction, CustomUser
+from .forms import TransferForm, AccountCreationForm, UserProfileForm, SignUpForm
 from .serializers import TransactionSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.http import JsonResponse
-import json
+
+# --- All your other views (generate_account_number, signup_view, etc.) stay the same ---
+# (I am including them all for a complete file to avoid errors)
 
 def generate_account_number():
     return str(uuid.uuid4().int)[:10]
@@ -85,11 +89,11 @@ def transfer_view(request):
     if request.method == 'POST':
         form = TransferForm(request.POST, user=request.user)
         if form.is_valid():
+            # ... (Full transfer logic)
             sender_account = form.cleaned_data['from_account']
             recipient_identifier = form.cleaned_data['recipient']
             amount = form.cleaned_data['amount']
             note = form.cleaned_data['note']
-
             try:
                 receiver_account = Account.objects.filter(account_number=recipient_identifier).first()
                 if not receiver_account:
@@ -127,7 +131,6 @@ def transfer_view(request):
         form = TransferForm(user=request.user)
     return render(request, 'core/transfer.html', {'form': form})
 
-
 @login_required
 def pay_me_view(request, account_number):
     recipient_account = get_object_or_404(Account, account_number=account_number)
@@ -135,37 +138,30 @@ def pay_me_view(request, account_number):
     form = TransferForm(user=request.user, initial=initial_data)
     return render(request, 'core/transfer.html', {'form': form, 'recipient_account': recipient_account})
 
-
 @login_required
 def transaction_list_view(request):
+    # ... (Full transaction list logic)
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     transactions_list = Transaction.objects.filter(
         Q(sender_account__user=request.user) | 
         Q(receiver_account__user=request.user)
     ).order_by('-timestamp')
-
     if start_date:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         transactions_list = transactions_list.filter(timestamp__gte=start_date_obj)
     if end_date:
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
         transactions_list = transactions_list.filter(timestamp__lte=end_date_obj)
-
     paginator = Paginator(transactions_list, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
-
-    context = {
-        'transactions': page_obj,
-        'start_date': start_date,
-        'end_date': end_date
-    }
+    context = { 'transactions': page_obj, 'start_date': start_date, 'end_date': end_date }
     return render(request, 'core/transactions.html', context)
-
 
 @login_required
 def account_detail_view(request, account_id):
+    # ... (Full account detail logic)
     account = get_object_or_404(Account, id=account_id, user=request.user)
     transactions = Transaction.objects.filter(
         Q(sender_account=account) | Q(receiver_account=account)
@@ -173,10 +169,10 @@ def account_detail_view(request, account_id):
     context = { 'account': account, 'recent_transactions': transactions }
     return render(request, 'core/account_detail.html', context)
 
-
 @api_view(['GET'])
 @login_required
 def api_transaction_detail(request, transaction_id):
+    # ... (Full API detail logic)
     try:
         transaction = Transaction.objects.get(
             Q(sender_account__user=request.user) | Q(receiver_account__user=request.user),
@@ -187,9 +183,9 @@ def api_transaction_detail(request, transaction_id):
     except Transaction.DoesNotExist:
         return Response({"error": "Transaction not found"}, status=404)
 
-
 @login_required
 def qr_code_view(request, account_id):
+    # ... (Full QR code logic)
     account = get_object_or_404(Account, id=account_id, user=request.user)
     pay_me_url = request.build_absolute_uri(
         reverse('pay_me', args=[account.account_number])
@@ -209,27 +205,55 @@ def scan_and_pay_view(request):
 def chatbot_view(request):
     return render(request, 'core/chatbot.html')
 
+# --- THIS IS THE UPDATED VIEW ---
 @login_required
 def chatbot_api_view(request):
     if request.method == 'POST':
-        # Decode the user's message from the request
         data = json.loads(request.body)
         user_message = data.get('message', '').lower()
+        bot_response = ""
 
-        # --- The Chatbot "Brain" ---
-        # We look for keywords in the user's message
-        if 'balance' in user_message:
-            bot_response = "You can view your account balance on the main dashboard page."
-        elif 'transfer' in user_message or 'send money' in user_message:
+        # --- The New "Smart" Brain ---
+        # We must check for "transfer" first, as it's more specific than "balance".
+        
+        if 'transfer' in user_message or 'send money' in user_message:
             bot_response = "To send money, please use the 'Transfer' link in the navigation bar."
+
+        elif 'balance' in user_message:
+            # This is a dynamic query. It's secure because we use request.user
+            accounts = Account.objects.filter(user=request.user)
+            if not accounts.exists():
+                bot_response = "You don't have any accounts yet. You can create one from the dashboard."
+            else:
+                bot_response = "Here are your account balances:\n"
+                for acc in accounts:
+                    # We use \n for a new line
+                    bot_response += f"• {acc.account_type}: ₹{acc.balance:,.2f}\n"
+        
+        elif 'transaction' in user_message or 'history' in user_message:
+            # This is another dynamic query
+            txns = Transaction.objects.filter(
+                Q(sender_account__user=request.user) | Q(receiver_account__user=request.user)
+            ).order_by('-timestamp')[:3] # Get the last 3 transactions
+
+            if not txns.exists():
+                bot_response = "You don't have any recent transactions."
+            else:
+                bot_response = "Here are your last 3 transactions:\n"
+                for txn in txns:
+                    bot_response += f"• ₹{txn.amount:,.2f} ({txn.transaction_type}) on {txn.timestamp.strftime('%d-%b-%Y')}\n"
+
         elif 'password' in user_message or 'reset' in user_message:
             bot_response = "You can reset your password by logging out and using the 'Forgot Password?' link on the login page."
+
         elif 'qr code' in user_message or 'scan' in user_message:
             bot_response = "Your personal QR code is on the dashboard. To pay someone, use the 'Scan & Pay' link."
-        elif 'hello' in user_message or 'hi' in user_message:
-            bot_response = "Hello! How can I help you today? You can ask me about your balance, transfers, or how to reset your password."
-        else:
-            bot_response = "I'm sorry, I can only answer questions about account balance, transfers, QR codes, or password resets. Please try rephrasing your question."
 
+        elif 'hello' in user_message or 'hi' in user_message:
+            bot_response = f"Hello, {request.user.username}! How can I help you today? You can ask about your balance, recent transactions, or transfers."
+            
+        else:
+            bot_response = "I'm sorry, I can only answer questions about balance, transactions, transfers, QR codes, or password resets. Please try rephrasing."
+        
         return JsonResponse({'response': bot_response})
     return JsonResponse({'error': 'Invalid request'}, status=400)
