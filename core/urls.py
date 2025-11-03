@@ -16,7 +16,6 @@ urlpatterns = [
     path('pay/<str:account_number>/', views.pay_me_view, name='pay_me'),
     
     # Chatbot URLs
-    path('chatbot/', views.chatbot_view, name='chatbot'),
     path('api/chatbot/', views.chatbot_api_view, name='chatbot_api'),
     path('api/chatbot/execute_transfer/', views.execute_chatbot_transfer, name='chatbot_execute_transfer'),
 ]

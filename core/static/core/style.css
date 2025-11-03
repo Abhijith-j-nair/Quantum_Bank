@@ -1,12 +1,3 @@
-/* General Body Styles */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
-    margin: 0;
-    padding: 0;
-}
-
 /* Navigation Bar */
 .navbar {
     background-color: #ffffff;
@@ -153,4 +144,216 @@ th {
 
 .link-button:hover {
     color: #007bff; /* Matches the hover color of other nav links */
+}
+
+/* --- CUSTOM CHECKBOX STYLES --- */
+.customCheckBoxHolder {
+  margin: 5px;
+  display: flex;
+}
+.customCheckBox {
+  width: fit-content;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 8px;
+  background-color: rgba(0, 0, 0, 0.16);
+  border-radius: 0px;
+  color: rgba(255, 255, 255, 0.7);
+  transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition-duration: 300ms;
+  transition-property: color, background-color, box-shadow;
+  display: flex;
+  height: 32px;
+  align-items: center;
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 1px 0px inset, rgba(255, 255, 255, 0.17) 0px 1px 1px 0px;
+  outline: none;
+  justify-content: center;
+  min-width: 55px;
+}
+.customCheckBox:hover {
+  background-color: #2c2c2c;
+  color: white;
+  box-shadow: rgba(0, 0, 0, 0.23) 0px -4px 1px 0px inset, rgba(255, 255, 255, 0.17) 0px -1px 1px 0px, rgba(0, 0, 0, 0.17) 0px 2px 4px 1px;
+}
+.customCheckBox .inner {
+  font-size: 18px;
+  font-weight: 900;
+  pointer-events: none;
+  transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition-duration: 300ms;
+  transition-property: transform;
+  transform: translateY(0px);
+}
+.customCheckBox:hover .inner {
+  transform: translateY(-2px);
+}
+.customCheckBoxWrapper:first-of-type .customCheckBox {
+  border-bottom-left-radius: 5px;
+  border-top-left-radius: 5px;
+  border-right: 0px;
+}
+.customCheckBoxWrapper:last-of-type .customCheckBox {
+  border-bottom-right-radius: 5px;
+  border-top-right-radius: 5px;
+  border-left: 0px;
+}
+.customCheckBoxInput {
+  display: none;
+}
+.customCheckBoxInput:checked + .customCheckBoxWrapper .customCheckBox {
+  background-color: #2d6737;
+  color: white;
+  box-shadow: rgba(0, 0, 0, 0.23) 0px -4px 1px 0px inset, rgba(255, 255, 255, 0.17) 0px -1px 1px 0px, rgba(0, 0, 0, 0.17) 0px 2px 4px 1px;
+}
+.customCheckBoxInput:checked + .customCheckBoxWrapper .customCheckBox .inner {
+  transform: translateY(-2px);
+}
+.customCheckBoxInput:checked + .customCheckBoxWrapper .customCheckBox:hover {
+  background-color: #34723f;
+  box-shadow: rgba(0, 0, 0, 0.26) 0px -4px 1px 0px inset, rgba(255, 255, 255, 0.17) 0px -1px 1px 0px, rgba(0, 0, 0, 0.15) 0px 3px 6px 2px;
+}
+.customCheckBoxWrapper .customCheckBox:hover .inner {
+  transform: translateY(-2px);
+}
+
+/* --- NEW: Blue Geometric Background --- */
+
+/* 1. Restore original light body color (will show if background fails) */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. Style for the background element */
+.page-background {
+  width: 100%;
+  height: 100%;
+  position: fixed; /* Fixes it to the viewport */
+  inset: 0;
+  z-index: -1;     /* Puts it behind all content */
+  background:
+    linear-gradient(135deg, #4f46e5 25%, transparent 25%) -50px 0,
+    linear-gradient(225deg, #4f46e5 25%, transparent 25%) -50px 0,
+    linear-gradient(315deg, #4f46e5 25%, transparent 25%),
+    linear-gradient(45deg, #4f46e5 25%, transparent 25%),
+    linear-gradient(to bottom, #3b82f6 0%, #2563eb 100%);
+  background-size:
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100% 100%;
+  background-color: #1d4ed8;
+}
+
+/* 3. Style for the spotlight/vignette overlay */
+.page-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      circle at 0% 0%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 100% 100%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    );
+  background-size: 50% 50%;
+  background-position:
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%;
+  background-repeat: no-repeat;
+}
+
+/* --- Revert Dark Mode Styles --- */
+
+/* 4. Make cards and forms light again for better contrast */
+.card, form {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  border: none;
+  backdrop-filter: none; /* Remove blur */
+}
+.card-title, .card h2, .card h3, .card h4, .card h5 {
+   color: #0d6efd !important; /* Use Bootstrap primary color */
+}
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* 5. Make the navbar light again */
+.navbar.bg-light {
+   background-color: #f8f9fa !important; /* Bootstrap light color */
+   backdrop-filter: none;
+   border-bottom: 1px solid #ddd;
+}
+.navbar .nav-link, .navbar .dropdown-toggle {
+    color: #333 !important;
+}
+.navbar .navbar-toggler-icon {
+    filter: none;
+}
+.dropdown-menu {
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+}
+.dropdown-item {
+    color: #333;
+}
+.dropdown-item:hover {
+    background-color: #0d6efd;
+    color: #fff;
+}
+.link-button {
+     color: #333;
+}
+.link-button:hover {
+     color: #0d6efd;
+}
+
+/* 6. Fix chat modal styles for light mode */
+.modal-content, .modal-header, .modal-body {
+    background-color: #fff;
+    backdrop-filter: none;
+    border: none;
+    color: #333;
+}
+.btn-close {
+    filter: none;
+}
+#chat-window {
+    background-color: #f9f9f9;
+    border-color: #ddd;
+}
+.bot-message {
+    background-color: #e9ecef;
+    color: #333;
+}
+.chip {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #333;
+}
+.chip:hover {
+    background-color: #e9ecef;
 }

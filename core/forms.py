@@ -3,6 +3,14 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, Account
 
 class SignUpForm(UserCreationForm):
+    # --- ADDED THIS FIELD ---
+    terms = forms.BooleanField(
+        required=True,
+        label="I agree to the terms and conditions",
+        error_messages={'required': 'You must agree to the terms.'}
+    )
+    # ------------------------
+
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = ('username', 'email', 'first_name', 'last_name', 'address')

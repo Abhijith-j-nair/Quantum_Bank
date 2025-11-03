@@ -205,10 +205,6 @@ def qr_code_view(request, account_id):
 def scan_and_pay_view(request):
     return render(request, 'core/scan.html')
 
-@login_required
-def chatbot_view(request):
-    return render(request, 'core/chatbot.html')
-
 # --- NEW: SECURE VIEW TO EXECUTE THE TRANSFER ---
 @login_required
 @transaction.atomic
