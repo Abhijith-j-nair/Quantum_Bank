@@ -3,145 +3,27 @@
 {% block content %}
 
 <style>
-    .faq-button {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      border: none;
-      background-color: #ffe53b;
-      background-image: linear-gradient(147deg, #ffe53b 0%, #ff2525 74%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.151);
-      position: fixed; /* Fixed position */
-      bottom: 25px;   /* Positioned at the bottom */
-      right: 25px;    /* Positioned at the right */
-      z-index: 1050;
-    }
-    .faq-button svg {
-      height: 1.5em;
-      fill: white;
-    }
-    .faq-button:hover svg {
-      animation: jello-vertical 0.7s both;
-    }
-    @keyframes jello-vertical {
-      0% {
-        transform: scale3d(1, 1, 1);
-      }
-      30% {
-        transform: scale3d(0.75, 1.25, 1);
-      }
-      40% {
-        transform: scale3d(1.25, 0.75, 1);
-      }
-      50% {
-        transform: scale3d(0.85, 1.15, 1);
-      }
-      65% {
-        transform: scale3d(1.05, 0.95, 1);
-      }
-      75% {
-        transform: scale3d(0.95, 1.05, 1);
-      }
-      100% {
-        transform: scale3d(1, 1, 1);
-      }
-    }
-
-    .tooltip {
-      position: absolute;
-      top: -20px;
-      opacity: 0;
-      background-color: #ffe53b;
-      background-image: linear-gradient(147deg, #ffe53b 0%, #ff2525 74%);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition-duration: 0.2s;
-      pointer-events: none;
-      letter-spacing: 0.5px;
-    }
-
-    .tooltip::before {
-      position: absolute;
-      content: "";
-      width: 10px;
-      height: 10px;
-      background-color: #ff2525;
-      background-size: 1000%;
-      background-position: center;
-      transform: rotate(45deg);
-      bottom: -15%;
-      transition-duration: 0.3s;
-    }
-
-    .faq-button:hover .tooltip {
-      top: -40px;
-      opacity: 1;
-      transition-duration: 0.3s;
-    }
-
-    /* --- Chat Window Styling (Unchanged) --- */
-    #chat-window {
-        height: 400px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 1rem;
-        overflow-y: auto;
-        margin-bottom: 1rem;
-        background-color: #f9f9f9;
-        display: flex;
-        flex-direction: column;
-    }
-    .message {
-        padding: 0.5rem 1rem;
-        border-radius: 15px;
-        margin-bottom: 0.5rem;
-        max-width: 80%;
-        white-space: pre-wrap;
-        line-height: 1.4;
-    }
-    .user-message {
-        background-color: #0d6efd;
-        color: white;
-        margin-left: auto;
-        text-align: right;
-    }
-    .bot-message {
-        background-color: #e9ecef;
-        color: #333;
-        margin-right: auto;
-    }
-    #suggestion-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    .chip {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
+    /* ... (Existing CSS remains the same) ... */
+    .faq-button { width: 50px; height: 50px; border-radius: 50%; border: none; background-color: #ffe53b; background-image: linear-gradient(147deg, #ffe53b 0%, #ff2525 74%); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.151); position: fixed; bottom: 25px; right: 25px; z-index: 1050; }
+    .faq-button svg { height: 1.5em; fill: white; }
+    .faq-button:hover svg { animation: jello-vertical 0.7s both; }
+    @keyframes jello-vertical { 0% { transform: scale3d(1, 1, 1); } 30% { transform: scale3d(0.75, 1.25, 1); } 40% { transform: scale3d(1.25, 0.75, 1); } 50% { transform: scale3d(0.85, 1.15, 1); } 65% { transform: scale3d(1.05, 0.95, 1); } 75% { transform: scale3d(0.95, 1.05, 1); } 100% { transform: scale3d(1, 1, 1); } }
+    .tooltip { position: absolute; top: -20px; opacity: 0; background-color: #ffe53b; background-image: linear-gradient(147deg, #ffe53b 0%, #ff2525 74%); color: white; padding: 5px 10px; border-radius: 5px; display: flex; align-items: center; justify-content: center; transition-duration: 0.2s; pointer-events: none; letter-spacing: 0.5px; }
+    .tooltip::before { position: absolute; content: ""; width: 10px; height: 10px; background-color: #ff2525; background-size: 1000%; background-position: center; transform: rotate(45deg); bottom: -15%; transition-duration: 0.3s; }
+    .faq-button:hover .tooltip { top: -40px; opacity: 1; transition-duration: 0.3s; }
+    #chat-window { height: 400px; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; overflow-y: auto; margin-bottom: 1rem; background-color: #f9f9f9; display: flex; flex-direction: column; }
+    .message { padding: 0.5rem 1rem; border-radius: 15px; margin-bottom: 0.5rem; max-width: 80%; white-space: pre-wrap; line-height: 1.4; }
+    .user-message { background-color: #0d6efd; color: white; margin-left: auto; text-align: right; }
+    .bot-message { background-color: #e9ecef; color: #333; margin-right: auto; }
+    #suggestion-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .chip { padding: 0.5rem 1rem; border-radius: 20px; background-color: #f8f9fa; border: 1px solid #dee2e6; cursor: pointer; font-size: 0.9rem; }
     .chip:hover { background-color: #e9ecef; }
     .typing-indicator { display: none; padding: 0.5rem 1rem; border-radius: 15px; margin-bottom: 0.5rem; max-width: 70%; background-color: #e9ecef; color: #333; margin-right: auto; }
     .typing-indicator span { height: 8px; width: 8px; background-color: #6c757d; border-radius: 50%; display: inline-block; animation: bounce 1.3s infinite; }
     .typing-indicator span:nth-of-type(2) { animation-delay: 0.15s; }
     .typing-indicator span:nth-of-type(3) { animation-delay: 0.3s; }
     @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-    .confirm-button {
-        background-color: #198754; color: white; border: none; padding: 0.5rem 1rem;
-        border-radius: 5px; cursor: pointer; margin-top: 0.5rem;
-    }
+    .confirm-button { background-color: #198754; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-top: 0.5rem; }
     .confirm-button:hover { background-color: #157347; }
 </style>
 
@@ -153,26 +35,22 @@
                 <p class="display-4 fw-bold">₹{{ total_balance|floatformat:2 }}</p>
             </div>
         </div>
-
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <h5 class="card-title text-muted">Account Balances</h5>
                 <p class="h4"><strong>Checking:</strong> ₹{{ checking_balance|floatformat:2 }}</p>
-                
                 {% if checking_account %}
                     <div style="margin-top: 1rem;">
                         <p><strong>Pay Me (Checking Account QR):</strong></p>
                         <img src="{% url 'qr_code' checking_account.id %}" alt="Checking Account QR Code" width="150">
                     </div>
                 {% endif %}
-
                 <p class="h4 mt-3"><strong>Savings:</strong> ₹{{ savings_balance|floatformat:2 }}</p>
                 <hr>
                 <a href="{% url 'create_account' %}" class="btn btn-primary">Add New Account</a>
             </div>
         </div>
     </div>
-    
     <div class="col-lg-4">
         <div class="card shadow-sm mb-4">
             <div class="card-body">
@@ -205,7 +83,6 @@
     </svg>
 </a>
 
-
 <div class="modal fade" id="chatbotModal" tabindex="-1" aria-labelledby="chatbotModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -214,26 +91,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                
-                <p class="card-subtitle mb-2 text-muted small">Try asking: "Send 100 from checking to savings"</p>
-        
+                <p class="card-subtitle mb-2 text-muted small">Try: "Pay 500 to Jithu" or "Transfer 100 from checking to savings"</p>
                 <div id="chat-window">
-                    <div id="typing-indicator" class="typing-indicator">
-                        <span></span><span></span><span></span>
-                    </div>
+                    <div id="typing-indicator" class="typing-indicator"><span></span><span></span><span></span></div>
                 </div>
-
                 <div id="suggestion-chips">
                     <div class="chip" data-question="What's my balance?">What's my balance?</div>
                     <div class="chip" data-question="Show my recent transactions">Recent transactions</div>
-                    <div class="chip" data-question="transfer 50 from checking to savings">Transfer 50</div>
+                    <div class="chip" data-question="transfer 50 from checking to savings">Transfer 50 (Self)</div>
                 </div>
-
                 <form id="chat-form" style="display: flex;">
                     <input type="text" id="chat-input" class="form-control" placeholder="Type your message..." autocomplete="off" style="flex-grow: 1; margin-right: 1rem;">
                     <button type="submit" class="btn btn-primary">Send</button>
                 </form>
-
             </div>
         </div>
     </div>
@@ -242,45 +112,34 @@
 
 {% block extra_js %}
 <script>
-    // --- Get all our HTML elements ---
     const chatWindow = document.getElementById('chat-window');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const suggestionChipsContainer = document.getElementById('suggestion-chips');
     const typingIndicator = document.getElementById('typing-indicator');
-    
-    // Get the CSRF token from the logout form in base.html
     const csrfToken = document.querySelector('form[action="{% url 'logout' %}"] input[name="csrfmiddlewaretoken"]').value;
 
-    // --- (Rest of the JavaScript for chat functionality is unchanged) ---
     chatForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const userMessage = chatInput.value.trim();
-        if (userMessage) {
-            handleUserMessage(userMessage);
-            chatInput.value = '';
-        }
+        if (userMessage) { handleUserMessage(userMessage); chatInput.value = ''; }
     });
-
     suggestionChipsContainer.addEventListener('click', function(event) {
         if (event.target.classList.contains('chip')) {
             const question = event.target.getAttribute('data-question');
             handleUserMessage(question);
         }
     });
-
     function handleUserMessage(message) {
         addMessage(message, 'user-message');
         suggestionChipsContainer.style.display = 'none';
         showTypingIndicator(true);
         getBotResponse(message);
     }
-
     function showTypingIndicator(show) {
         typingIndicator.style.display = show ? 'block' : 'none';
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
     function addMessage(message, className) {
         const messageElement = document.createElement('div');
         messageElement.classList.add('message', className);
@@ -288,7 +147,6 @@
         chatWindow.insertBefore(messageElement, typingIndicator);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
     async function getBotResponse(userMessage) {
         try {
             const response = await fetch("{% url 'chatbot_api' %}", {
@@ -298,7 +156,6 @@
             });
             const data = await response.json();
             showTypingIndicator(false);
-            
             if (data.type === 'confirmation') {
                 addConfirmationMessage(data.message, data.details);
             } else {
@@ -310,7 +167,6 @@
             addMessage("Sorry, something went wrong. Please try again.", 'bot-message');
         }
     }
-
     function addConfirmationMessage(message, details) {
         const messageElement = document.createElement('div');
         messageElement.classList.add('message', 'bot-message');
@@ -322,19 +178,22 @@
         
         confirmButton.dataset.amount = details.amount;
         confirmButton.dataset.fromType = details.from_type;
-        confirmButton.dataset.toType = details.to_type;
+        // These fields handle both self (to_type) and P2P (recipient_account_number)
+        if (details.to_type) confirmButton.dataset.toType = details.to_type;
+        if (details.recipient_account_number) confirmButton.dataset.recipientNum = details.recipient_account_number;
 
         confirmButton.onclick = handleConfirmClick;
-        
         messageElement.appendChild(document.createElement('br'));
         messageElement.appendChild(confirmButton);
         chatWindow.insertBefore(messageElement, typingIndicator);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
     async function handleConfirmClick(event) {
         const button = event.target;
-        const { amount, fromType, toType } = button.dataset;
+        const amount = button.dataset.amount;
+        const fromType = button.dataset.fromType;
+        const toType = button.dataset.toType;
+        const recipientNum = button.dataset.recipientNum;
 
         button.disabled = true;
         button.textContent = 'Processing...';
@@ -346,7 +205,8 @@
                 body: JSON.stringify({
                     amount: amount,
                     from_type: fromType,
-                    to_type: toType
+                    to_type: toType,
+                    recipient_account_number: recipientNum
                 })
             });
             const data = await response.json();

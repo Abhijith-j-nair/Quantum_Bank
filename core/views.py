@@ -14,17 +14,15 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import datetime
 import json
-import re # --- NEW: Import for regular expressions
-from decimal import Decimal # --- NEW: Import for handling currency
+import re 
+from decimal import Decimal
 
 from .models import Account, Transaction, CustomUser
 from .forms import TransferForm, AccountCreationForm, UserProfileForm, SignUpForm
 from .serializers import TransactionSerializer
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-# --- (All your existing views like generate_account_number, signup_view, etc. are here) ---
-# ...
 def generate_account_number():
     return str(uuid.uuid4().int)[:10]
 
@@ -131,12 +129,14 @@ def transfer_view(request):
         form = TransferForm(user=request.user)
     return render(request, 'core/transfer.html', {'form': form})
 
+
 @login_required
 def pay_me_view(request, account_number):
     recipient_account = get_object_or_404(Account, account_number=account_number)
     initial_data = {'recipient': recipient_account.account_number}
     form = TransferForm(user=request.user, initial=initial_data)
     return render(request, 'core/transfer.html', {'form': form, 'recipient_account': recipient_account})
+
 
 @login_required
 def transaction_list_view(request):
@@ -175,6 +175,7 @@ def account_detail_view(request, account_id):
     context = { 'account': account, 'recent_transactions': transactions }
     return render(request, 'core/account_detail.html', context)
 
+
 @api_view(['GET'])
 @login_required
 def api_transaction_detail(request, transaction_id):
@@ -187,6 +188,7 @@ def api_transaction_detail(request, transaction_id):
         return Response(serializer.data)
     except Transaction.DoesNotExist:
         return Response({"error": "Transaction not found"}, status=404)
+
 
 @login_required
 def qr_code_view(request, account_id):
@@ -205,7 +207,7 @@ def qr_code_view(request, account_id):
 def scan_and_pay_view(request):
     return render(request, 'core/scan.html')
 
-# --- NEW: SECURE VIEW TO EXECUTE THE TRANSFER ---
+# --- UPDATED: SECURE VIEW TO EXECUTE TRANSFERS (SELF AND P2P) ---
 @login_required
 @transaction.atomic
 def execute_chatbot_transfer(request):
@@ -216,29 +218,44 @@ def execute_chatbot_transfer(request):
         data = json.loads(request.body)
         amount_str = data.get('amount')
         from_acc_type = data.get('from_type')
+        
+        # Check if this is a P2P transfer (has a specific recipient account number)
+        recipient_num = data.get('recipient_account_number')
+        # Or a self-transfer (has a target account type)
         to_acc_type = data.get('to_type')
 
-        if not all([amount_str, from_acc_type, to_acc_type]):
+        if not amount_str or not from_acc_type:
             return JsonResponse({'status': 'error', 'message': 'Missing data.'}, status=400)
 
-        # Securely fetch accounts *owned by the logged-in user*
+        # 1. Fetch Sender Account (Must belong to user)
         from_account = Account.objects.filter(user=request.user, account_type__iexact=from_acc_type).first()
-        to_account = Account.objects.filter(user=request.user, account_type__iexact=to_acc_type).first()
-
         if not from_account:
             return JsonResponse({'status': 'error', 'message': f"You don't own a '{from_acc_type}' account."}, status=404)
-        if not to_account:
-            return JsonResponse({'status': 'error', 'message': f"You don't own a '{to_acc_type}' account."}, status=404)
 
+        # 2. Fetch Receiver Account
+        if recipient_num:
+            # P2P Case: Find by account number
+            to_account = Account.objects.filter(account_number=recipient_num).first()
+        elif to_acc_type:
+            # Self Case: Find by type belonging to user
+            to_account = Account.objects.filter(user=request.user, account_type__iexact=to_acc_type).first()
+        else:
+             return JsonResponse({'status': 'error', 'message': "Target account not specified."}, status=400)
+
+        if not to_account:
+            return JsonResponse({'status': 'error', 'message': "Recipient account not found."}, status=404)
+
+        # 3. Perform Balance Check
         amount = Decimal(amount_str)
         if from_account.balance < amount:
             return JsonResponse({'status': 'error', 'message': 'Insufficient funds.'}, status=400)
 
-        # Perform the transfer
+        # 4. Execute Transfer
         from_account.balance -= amount
         to_account.balance += amount
         from_account.save()
         to_account.save()
+        
         Transaction.objects.create(
             sender_account=from_account,
             receiver_account=to_account,
@@ -247,42 +264,87 @@ def execute_chatbot_transfer(request):
             description='Transfer via AI Assistant',
             status='Completed'
         )
-        return JsonResponse({'status': 'success', 'message': f'Transfer of ₹{amount:,.2f} to your {to_acc_type} account was successful!'})
+        
+        # Custom success message
+        if recipient_num:
+             msg = f"Successfully sent ₹{amount:,.2f} to {to_account.user.username}!"
+        else:
+             msg = f"Successfully transferred ₹{amount:,.2f} to your {to_account.account_type} account."
+
+        return JsonResponse({'status': 'success', 'message': msg})
 
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-# --- UPDATED: CHATBOT API VIEW (PHASE 3) ---
+
+# --- UPDATED: CHATBOT API VIEW (PHASE 4) ---
 @login_required
 def chatbot_api_view(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         user_message = data.get('message', '').lower()
+        bot_response = ""
         
-        # --- Intent 1: Transaction ---
-        # Try to parse a transfer request, e.g., "transfer 500 from checking to savings"
-        transfer_match = re.search(r'(transfer|send) ₹?(\d+(\.\d{1,2})?) from (checking|savings|investment) to (checking|savings|investment)', user_message)
-        if transfer_match:
-            amount = transfer_match.group(2)
-            from_acc_type = transfer_match.group(4).capitalize()
-            to_acc_type = transfer_match.group(5).capitalize()
+        # --- Intent 1: Self Transfer ("transfer 100 from checking to savings") ---
+        self_transfer_match = re.search(r'(transfer|move)\s+₹?(\d+(\.\d{1,2})?)\s+from\s+(checking|savings|investment)\s+to\s+(checking|savings|investment)', user_message)
+        
+        # --- Intent 2: Pay Another User ("pay 500 to jithu") ---
+        # Default source is 'Checking'
+        p2p_match = re.search(r'(pay|send)\s+₹?(\d+(\.\d{1,2})?)\s+to\s+([a-zA-Z0-9_@\.]+)', user_message)
 
-            if from_acc_type == to_acc_type:
+        if self_transfer_match:
+            amount = self_transfer_match.group(2)
+            from_acc = self_transfer_match.group(4).capitalize()
+            to_acc = self_transfer_match.group(5).capitalize()
+            if from_acc == to_acc:
                 return JsonResponse({'response': "You can't transfer money to the same account."})
-
-            # Propose the transaction
+            
             return JsonResponse({
                 'type': 'confirmation',
-                'message': f"I'm ready to transfer ₹{amount} from your {from_acc_type} to your {to_acc_type} account. Please confirm.",
-                'details': {
-                    'amount': amount,
-                    'from_type': from_acc_type,
-                    'to_type': to_acc_type
+                'message': f"I'm ready to transfer ₹{amount} from your {from_acc} to your {to_acc}. Please confirm.",
+                'details': { 'amount': amount, 'from_type': from_acc, 'to_type': to_acc }
+            })
+
+        elif p2p_match:
+            amount = p2p_match.group(2)
+            recipient_name = p2p_match.group(4)
+            
+            # Logic to find the recipient (similar to transfer view)
+            recipient_account = None
+            
+            # 1. Try Account Number
+            recipient_account = Account.objects.filter(account_number=recipient_name).first()
+            
+            # 2. Try Username (if not found by number)
+            if not recipient_account:
+                try:
+                    target_user = CustomUser.objects.get(username__iexact=recipient_name)
+                    # Default to their Checking account
+                    recipient_account = Account.objects.filter(user=target_user, account_type='Checking').first()
+                    if not recipient_account:
+                         # Fallback to any account
+                         recipient_account = Account.objects.filter(user=target_user).first()
+                except CustomUser.DoesNotExist:
+                    pass
+
+            if not recipient_account:
+                return JsonResponse({'response': f"I couldn't find a user or account named '{recipient_name}'."})
+            
+            if recipient_account.user == request.user:
+                return JsonResponse({'response': "You can't pay yourself using this command. Use 'transfer from checking to savings' instead."})
+
+            return JsonResponse({
+                'type': 'confirmation',
+                'message': f"Found user {recipient_account.user.username} ({recipient_account.account_number}). Ready to send ₹{amount} from your Checking account. Confirm?",
+                'details': { 
+                    'amount': amount, 
+                    'from_type': 'Checking', # Default source
+                    'recipient_account_number': recipient_account.account_number 
                 }
             })
 
-        # --- Intent 2: Balance ---
-        if 'balance' in user_message:
+        # --- Other Intents (Balance, History, FAQ) ---
+        elif 'balance' in user_message:
             accounts = Account.objects.filter(user=request.user)
             if not accounts.exists():
                 bot_response = "You don't have any accounts yet."
@@ -292,8 +354,7 @@ def chatbot_api_view(request):
                     bot_response += f"• {acc.account_type}: ₹{acc.balance:,.2f}\n"
             return JsonResponse({'response': bot_response})
         
-        # --- Intent 3: Transactions ---
-        if 'transaction' in user_message or 'history' in user_message:
+        elif 'transaction' in user_message or 'history' in user_message:
             txns = Transaction.objects.filter(
                 Q(sender_account__user=request.user) | Q(receiver_account__user=request.user)
             ).order_by('-timestamp')[:3]
@@ -305,15 +366,10 @@ def chatbot_api_view(request):
                     bot_response += f"• ₹{txn.amount:,.2f} ({txn.transaction_type}) on {txn.timestamp.strftime('%d-%b-%Y')}\n"
             return JsonResponse({'response': bot_response})
             
-        # --- Fallback (FAQ) Intents ---
-        if 'password' in user_message or 'reset' in user_message:
-            bot_response = "You can reset your password by logging out and using the 'Forgot Password?' link."
-        elif 'qr code' in user_message or 'scan' in user_message:
-            bot_response = "Your personal QR code is on the dashboard. To pay someone, use the 'Scan & Pay' link."
         elif 'hello' in user_message or 'hi' in user_message:
-            bot_response = f"Hello, {request.user.username}! How can I help you today?"
+            bot_response = f"Hello, {request.user.username}! You can say 'Pay 500 to Jithu' or 'Transfer 100 to savings'."
         else:
-            bot_response = "I'm sorry, I don't understand that. You can ask about your balance or recent transactions. You can also ask me to 'transfer 100 from checking to savings'."
+            bot_response = "I'm sorry, I don't understand. Try 'Pay 100 to [Username]' or ask for your balance."
         
         return JsonResponse({'response': bot_response})
     return JsonResponse({'error': 'Invalid request'}, status=400)
