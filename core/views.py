@@ -50,6 +50,12 @@ def create_account_view(request):
         if form.is_valid():
             account = form.save(commit=False)
             account.user = request.user
+            
+            # --- FIX: Check if account type already exists ---
+            if Account.objects.filter(user=request.user, account_type=account.account_type).exists():
+                messages.error(request, f"You already have a {account.account_type} account.")
+                return render(request, 'core/create_account.html', {'form': form})
+            
             account.account_number = generate_account_number()
             account.save()
             messages.success(request, f"New {account.account_type} account created!")
@@ -207,7 +213,7 @@ def qr_code_view(request, account_id):
 def scan_and_pay_view(request):
     return render(request, 'core/scan.html')
 
-# --- UPDATED: SECURE VIEW TO EXECUTE TRANSFERS (SELF AND P2P) ---
+# --- SECURE VIEW TO EXECUTE TRANSFERS (SELF AND P2P) ---
 @login_required
 @transaction.atomic
 def execute_chatbot_transfer(request):
@@ -277,7 +283,7 @@ def execute_chatbot_transfer(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
-# --- UPDATED: CHATBOT API VIEW (PHASE 4) ---
+# --- CHATBOT API VIEW ---
 @login_required
 def chatbot_api_view(request):
     if request.method == 'POST':
@@ -285,11 +291,10 @@ def chatbot_api_view(request):
         user_message = data.get('message', '').lower()
         bot_response = ""
         
-        # --- Intent 1: Self Transfer ("transfer 100 from checking to savings") ---
+        # --- Intent 1: Self Transfer ---
         self_transfer_match = re.search(r'(transfer|move)\s+₹?(\d+(\.\d{1,2})?)\s+from\s+(checking|savings|investment)\s+to\s+(checking|savings|investment)', user_message)
         
-        # --- Intent 2: Pay Another User ("pay 500 to jithu") ---
-        # Default source is 'Checking'
+        # --- Intent 2: Pay Another User ---
         p2p_match = re.search(r'(pay|send)\s+₹?(\d+(\.\d{1,2})?)\s+to\s+([a-zA-Z0-9_@\.]+)', user_message)
 
         if self_transfer_match:
@@ -309,20 +314,18 @@ def chatbot_api_view(request):
             amount = p2p_match.group(2)
             recipient_name = p2p_match.group(4)
             
-            # Logic to find the recipient (similar to transfer view)
+            # Logic to find the recipient
             recipient_account = None
             
             # 1. Try Account Number
             recipient_account = Account.objects.filter(account_number=recipient_name).first()
             
-            # 2. Try Username (if not found by number)
+            # 2. Try Username
             if not recipient_account:
                 try:
                     target_user = CustomUser.objects.get(username__iexact=recipient_name)
-                    # Default to their Checking account
                     recipient_account = Account.objects.filter(user=target_user, account_type='Checking').first()
                     if not recipient_account:
-                         # Fallback to any account
                          recipient_account = Account.objects.filter(user=target_user).first()
                 except CustomUser.DoesNotExist:
                     pass
@@ -338,12 +341,12 @@ def chatbot_api_view(request):
                 'message': f"Found user {recipient_account.user.username} ({recipient_account.account_number}). Ready to send ₹{amount} from your Checking account. Confirm?",
                 'details': { 
                     'amount': amount, 
-                    'from_type': 'Checking', # Default source
+                    'from_type': 'Checking',
                     'recipient_account_number': recipient_account.account_number 
                 }
             })
 
-        # --- Other Intents (Balance, History, FAQ) ---
+        # --- Other Intents ---
         elif 'balance' in user_message:
             accounts = Account.objects.filter(user=request.user)
             if not accounts.exists():
